@@ -24,8 +24,8 @@
             "6. Repeat steps for other connections"
         ],
         "prerequisitesDeployTemplateFile": "Azure-Sentinel/Solutions/RubrikSecurityCloud/Playbooks/RubrikCustomConnector/Rubrik_custom_conn.json",
-        "lastUpdateTime": "2022-09-26T00:00:00.000Z",
-        "entities":  ["account","url"],
+        "lastUpdateTime":  "",
+        "entities":  ["account","url","api"],
         "tags":  ["Recovery","Ransomware Discovery","Security","Rubrik"],
         "support":  {
             "tier":  "community",
@@ -147,9 +147,9 @@
                                 }
                             }
                         },
-                        "Check_if_URLs_is_provided_to_fetch_yara_rule":  {
+                        "Check_if_URL_is_provided_to_fetch_yara_rule":  {
                             "actions":  {
-                                "Fetch_yara_rule_from_URLs":  {
+                                "Fetch_yara_rule_from_URL":  {
                                     "runAfter":  {
                                     },
                                     "type":  "Http",
@@ -160,14 +160,14 @@
                                 },
                                 "Set_variable_8":  {
                                     "runAfter":  {
-                                        "Fetch_yara_rule_from_URLs":  [
+                                        "Fetch_yara_rule_from_URL":  [
                                             "Succeeded"
                                         ]
                                     },
                                     "type":  "SetVariable",
                                     "inputs":  {
                                         "name":  "Yara Rule",
-                                        "value":  "@{body('Fetch_yara_rule_from_URLs')}"
+                                        "value":  "@{body('Fetch_yara_rule_from_URL')}"
                                     }
                                 }
                             },
@@ -1338,7 +1338,7 @@
                                                                         "body":  {
                                                                             "BaseUrl":  "@triggerBody()?['BaseUrl']",
                                                                             "ClusterId":  "@triggerBody()?['ClusterId']",
-                                                                            "PollingInterval":  "@body('Collect_IOC_scan_and_general_recovery_data')?['data']?['polling interval for recovery']",
+                                                                            "PollingInterval":  "@if(or(empty(string(body('Collect_IOC_scan_and_general_recovery_data')?['data']?['polling interval for recovery'])),lessOrEquals(int(body('Collect_IOC_scan_and_general_recovery_data')?['data']?['polling interval for recovery']),0)),5,int(body('Collect_IOC_scan_and_general_recovery_data')?['data']?['polling interval for recovery']))",
                                                                             "PollingTimeout":  "@body('Collect_IOC_scan_and_general_recovery_data')?['data']?['polling timeout for IOC Scan']",
                                                                             "RequestId":  "@{if(empty(body('Parse_Response_of_Live-Mount_recovered_snapshot')?['data']?['vSphereVMInitiateLiveMountV2']?['id']),body('Parse_JSON')?['data']?['vSphereVMExportSnapshotV2']?['id'],body('Parse_Response_of_Live-Mount_recovered_snapshot')?['data']?['vSphereVMInitiateLiveMountV2']?['id'])}"
                                                                         },
@@ -2646,7 +2646,7 @@
                                                                                     "type":  "SetVariable",
                                                                                     "inputs":  {
                                                                                         "name":  "ErrorMessage",
-                                                                                        "value":  "Status Code: @{output('Get_Vsphere_Datastore_ID')['statusCode']}, Error message:  @{body('Get_Vsphere_Datastore_ID')['message']}"
+                                                                                        "value":  "Status Code: @{outputs('Get_Vsphere_Datastore_ID')['statusCode']}, Error message:  @{body('Get_Vsphere_Datastore_ID')['message']}"
                                                                                     }
                                                                                 },
                                                                                 "Terminate_14":  {
@@ -2764,6 +2764,19 @@
                                                                                 "actions":  {
                                                                                     "Does_Get_Vsphere_Host_ID_-_2_API_response_contains_errors":  {
                                                                                         "actions":  {
+                                                                                            "Response_15":  {
+                                                                                                "runAfter":  {
+                                                                                                    "Set_variable_16":  [
+                                                                                                        "Succeeded"
+                                                                                                    ]
+                                                                                                },
+                                                                                                "type":  "Response",
+                                                                                                "kind":  "Http",
+                                                                                                "inputs":  {
+                                                                                                    "body":  "While Getting HostID for Live-Mount : @{body('Get_Vsphere_Host_ID_-_2')?['errors'][0]?['message']}",
+                                                                                                    "statusCode":  200
+                                                                                                }
+                                                                                            },
                                                                                             "Set_variable_16":  {
                                                                                                 "runAfter":  {
                                                                                                 },
@@ -2775,7 +2788,7 @@
                                                                                             },
                                                                                             "Terminate_12":  {
                                                                                                 "runAfter":  {
-                                                                                                    "Set_variable_16":  [
+                                                                                                    "Response_15":  [
                                                                                                         "Succeeded"
                                                                                                     ]
                                                                                                 },
@@ -2790,108 +2803,6 @@
                                                                                         },
                                                                                         "runAfter":  {
                                                                                         },
-                                                                                        "else":  {
-                                                                                            "actions":  {
-                                                                                                "Response_of_Get_Vsphere_Host_ID_-_2":  {
-                                                                                                    "runAfter":  {
-                                                                                                    },
-                                                                                                    "type":  "ParseJson",
-                                                                                                    "inputs":  {
-                                                                                                        "content":  "@body('Get_Vsphere_Host_ID_-_2')",
-                                                                                                        "schema":  {
-                                                                                                            "properties":  {
-                                                                                                                "data":  {
-                                                                                                                    "properties":  {
-                                                                                                                        "vSphereHostConnection":  {
-                                                                                                                            "properties":  {
-                                                                                                                                "__typename":  {
-                                                                                                                                    "type":  "string"
-                                                                                                                                },
-                                                                                                                                "edges":  {
-                                                                                                                                    "items":  {
-                                                                                                                                        "properties":  {
-                                                                                                                                            "__typename":  {
-                                                                                                                                                "type":  "string"
-                                                                                                                                            },
-                                                                                                                                            "node":  {
-                                                                                                                                                "properties":  {
-                                                                                                                                                    "__typename":  {
-                                                                                                                                                        "type":  "string"
-                                                                                                                                                    },
-                                                                                                                                                    "id":  {
-                                                                                                                                                        "type":  "string"
-                                                                                                                                                    },
-                                                                                                                                                    "name":  {
-                                                                                                                                                        "type":  "string"
-                                                                                                                                                    },
-                                                                                                                                                    "physicalPath":  {
-                                                                                                                                                        "items":  {
-                                                                                                                                                            "properties":  {
-                                                                                                                                                                "__typename":  {
-                                                                                                                                                                    "type":  "string"
-                                                                                                                                                                },
-                                                                                                                                                                "fid":  {
-                                                                                                                                                                    "type":  "string"
-                                                                                                                                                                },
-                                                                                                                                                                "name":  {
-                                                                                                                                                                    "type":  "string"
-                                                                                                                                                                },
-                                                                                                                                                                "objectType":  {
-                                                                                                                                                                    "type":  "string"
-                                                                                                                                                                }
-                                                                                                                                                            },
-                                                                                                                                                            "required":  [
-                                                                                                                                                                "fid",
-                                                                                                                                                                "name",
-                                                                                                                                                                "objectType",
-                                                                                                                                                                "__typename"
-                                                                                                                                                            ],
-                                                                                                                                                            "type":  "object"
-                                                                                                                                                        },
-                                                                                                                                                        "type":  "array"
-                                                                                                                                                    }
-                                                                                                                                                },
-                                                                                                                                                "type":  "object"
-                                                                                                                                            }
-                                                                                                                                        },
-                                                                                                                                        "required":  [
-                                                                                                                                            "node",
-                                                                                                                                            "__typename"
-                                                                                                                                        ],
-                                                                                                                                        "type":  "object"
-                                                                                                                                    },
-                                                                                                                                    "type":  "array"
-                                                                                                                                },
-                                                                                                                                "pageInfo":  {
-                                                                                                                                    "properties":  {
-                                                                                                                                        "__typename":  {
-                                                                                                                                            "type":  "string"
-                                                                                                                                        },
-                                                                                                                                        "endCursor":  {
-                                                                                                                                            "type":  "string"
-                                                                                                                                        },
-                                                                                                                                        "hasNextPage":  {
-                                                                                                                                            "type":  "boolean"
-                                                                                                                                        },
-                                                                                                                                        "hasPreviousPage":  {
-                                                                                                                                            "type":  "boolean"
-                                                                                                                                        }
-                                                                                                                                    },
-                                                                                                                                    "type":  "object"
-                                                                                                                                }
-                                                                                                                            },
-                                                                                                                            "type":  "object"
-                                                                                                                        }
-                                                                                                                    },
-                                                                                                                    "type":  "object"
-                                                                                                                }
-                                                                                                            },
-                                                                                                            "type":  "object"
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        },
                                                                                         "expression":  {
                                                                                             "and":  [
                                                                                                 {
@@ -2903,6 +2814,127 @@
                                                                                             ]
                                                                                         },
                                                                                         "type":  "If"
+                                                                                    },
+                                                                                    "For_each":  {
+                                                                                        "foreach":  "@body('Response_of_Get_Vsphere_Host_ID_-_2')?['data']?['vSphereHostConnection']?['edges']",
+                                                                                        "actions":  {
+                                                                                            "Set_variable_19":  {
+                                                                                                "runAfter":  {
+                                                                                                },
+                                                                                                "type":  "SetVariable",
+                                                                                                "inputs":  {
+                                                                                                    "name":  "HostId",
+                                                                                                    "value":  "@items('For_each')?['node']?['id']"
+                                                                                                }
+                                                                                            }
+                                                                                        },
+                                                                                        "runAfter":  {
+                                                                                            "Response_of_Get_Vsphere_Host_ID_-_2":  [
+                                                                                                "Succeeded"
+                                                                                            ]
+                                                                                        },
+                                                                                        "type":  "Foreach"
+                                                                                    },
+                                                                                    "Response_of_Get_Vsphere_Host_ID_-_2":  {
+                                                                                        "runAfter":  {
+                                                                                            "Does_Get_Vsphere_Host_ID_-_2_API_response_contains_errors":  [
+                                                                                                "Succeeded"
+                                                                                            ]
+                                                                                        },
+                                                                                        "type":  "ParseJson",
+                                                                                        "inputs":  {
+                                                                                            "content":  "@body('Get_Vsphere_Host_ID_-_2')",
+                                                                                            "schema":  {
+                                                                                                "properties":  {
+                                                                                                    "data":  {
+                                                                                                        "properties":  {
+                                                                                                            "vSphereHostConnection":  {
+                                                                                                                "properties":  {
+                                                                                                                    "__typename":  {
+                                                                                                                        "type":  "string"
+                                                                                                                    },
+                                                                                                                    "edges":  {
+                                                                                                                        "items":  {
+                                                                                                                            "properties":  {
+                                                                                                                                "__typename":  {
+                                                                                                                                    "type":  "string"
+                                                                                                                                },
+                                                                                                                                "node":  {
+                                                                                                                                    "properties":  {
+                                                                                                                                        "__typename":  {
+                                                                                                                                            "type":  "string"
+                                                                                                                                        },
+                                                                                                                                        "id":  {
+                                                                                                                                            "type":  "string"
+                                                                                                                                        },
+                                                                                                                                        "name":  {
+                                                                                                                                            "type":  "string"
+                                                                                                                                        },
+                                                                                                                                        "physicalPath":  {
+                                                                                                                                            "items":  {
+                                                                                                                                                "properties":  {
+                                                                                                                                                    "__typename":  {
+                                                                                                                                                        "type":  "string"
+                                                                                                                                                    },
+                                                                                                                                                    "fid":  {
+                                                                                                                                                        "type":  "string"
+                                                                                                                                                    },
+                                                                                                                                                    "name":  {
+                                                                                                                                                        "type":  "string"
+                                                                                                                                                    },
+                                                                                                                                                    "objectType":  {
+                                                                                                                                                        "type":  "string"
+                                                                                                                                                    }
+                                                                                                                                                },
+                                                                                                                                                "required":  [
+                                                                                                                                                    "fid",
+                                                                                                                                                    "name",
+                                                                                                                                                    "objectType",
+                                                                                                                                                    "__typename"
+                                                                                                                                                ],
+                                                                                                                                                "type":  "object"
+                                                                                                                                            },
+                                                                                                                                            "type":  "array"
+                                                                                                                                        }
+                                                                                                                                    },
+                                                                                                                                    "type":  "object"
+                                                                                                                                }
+                                                                                                                            },
+                                                                                                                            "required":  [
+                                                                                                                                "node",
+                                                                                                                                "__typename"
+                                                                                                                            ],
+                                                                                                                            "type":  "object"
+                                                                                                                        },
+                                                                                                                        "type":  "array"
+                                                                                                                    },
+                                                                                                                    "pageInfo":  {
+                                                                                                                        "properties":  {
+                                                                                                                            "__typename":  {
+                                                                                                                                "type":  "string"
+                                                                                                                            },
+                                                                                                                            "endCursor":  {
+                                                                                                                                "type":  "string"
+                                                                                                                            },
+                                                                                                                            "hasNextPage":  {
+                                                                                                                                "type":  "boolean"
+                                                                                                                            },
+                                                                                                                            "hasPreviousPage":  {
+                                                                                                                                "type":  "boolean"
+                                                                                                                            }
+                                                                                                                        },
+                                                                                                                        "type":  "object"
+                                                                                                                    }
+                                                                                                                },
+                                                                                                                "type":  "object"
+                                                                                                            }
+                                                                                                        },
+                                                                                                        "type":  "object"
+                                                                                                    }
+                                                                                                },
+                                                                                                "type":  "object"
+                                                                                            }
+                                                                                        }
                                                                                     }
                                                                                 },
                                                                                 "runAfter":  {
@@ -3014,7 +3046,7 @@
                                                                     {
                                                                         "equals":  [
                                                                             "@body('Collect_IOC_scan_and_general_recovery_data')?['data']?['live-mount or export']",
-                                                                            "LIVE-MOUNT"
+                                                                            "Live-Mount"
                                                                         ]
                                                                     }
                                                                 ]
@@ -3777,7 +3809,7 @@
                         },
                         "RubrikIOCScan":  {
                             "runAfter":  {
-                                "Check_if_URLs_is_provided_to_fetch_yara_rule":  [
+                                "Check_if_URL_is_provided_to_fetch_yara_rule":  [
                                     "Succeeded"
                                 ]
                             },
